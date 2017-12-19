@@ -175,7 +175,37 @@
     
     <div class="article-entry" itemprop="articleBody">
       
-        <p>送外卖了</p>
+        <pre><code> K-means算法
+设置k值，
+初始化k个中心点（几种方法）；
+</code></pre><p><a href="https://www.cnblogs.com/kemaswill/archive/2013/01/26/2877434.html" target="_blank" rel="noopener">https://www.cnblogs.com/kemaswill/archive/2013/01/26/2877434.html</a> 中有关于设置k值和初始中心点的方法。<br>    计算数据集中每个点v到中心点的距离，将点v分配到离其最近的中心点所在类中，得到k个簇；<br>计算距离一般使用的是欧式距离，链接<br><a href="http://blog.csdn.net/Losteng/article/details/50893931" target="_blank" rel="noopener">http://blog.csdn.net/Losteng/article/details/50893931</a> 中是数学中常用的计算距离的公式。<br>    分别计算k个簇中节点的均值作为新的中心点；<br>μ_k=1/n<em>k  ∑</em>(j=1)^(n_k)▒x_j^((k))   ( k = [1, 2, … ,K] )<br>    重复3-4，直到簇稳定（即每个簇的中心点不变）。</p>
+<p>容易陷入局部最优解，从不同的初始中心点开始，寻找TSD值最小的聚类。</p>
+<p>存在的缺陷：<br>     K-mediod算法</p>
+<pre><code> GMM算法
+
+ 谱聚类
+
+层次聚类
+</code></pre><p>通过计算不同数据点的相似度来创建一棵有层次的嵌套聚类树。原始数据点是树的最底层，树的顶层是聚类的根节点。分为自顶向下分裂（<a href="http://blog.csdn.net/u012500237/article/details/65437525）和自底向上合并（http://bluewhale.cc/2016-04-19/hierarchical-clustering.html）两种构建树的方法。" target="_blank" rel="noopener">http://blog.csdn.net/u012500237/article/details/65437525）和自底向上合并（http://bluewhale.cc/2016-04-19/hierarchical-clustering.html）两种构建树的方法。</a></p>
+<pre><code>BIRCH（Balanced Iterative Reducing and Clustering Using Hierarchies）利用层次方法的平衡迭代规约和聚类。自底向上构建树。
+</code></pre><p>适用于数据量大，类别数也较多的情况。只需要单遍扫描数据集就能进行聚类，利用树结构。聚类特征树(Clustering Feature Tree，简称CF Tree)，树的每一个节点是由若干个聚类特征(Clustering Feature，简称CF)组成，而且节点内部的CF有指向孩子节点的指针，叶子节点用双向列表链接。</p>
+<p>聚类特征CF是这样定义的：每一个CF是一个三元组，可以用（N，LS，SS）表示。其中N代表了这个CF中拥有的样本点的数量；LS代表了这个CF中拥有的样本点各特征维度的和向量，SS代表了这个CF中拥有的样本点各特征维度的平方和。<br>举个例子，在CF Tree中的某一个节点的某一个CF中，有下面5个样本(3,4), (2,6), (4,5), (4,7), (3,8)。则它对应的N=5， LS=(3+2+4+4+3,4+6+5+7+8)=(16,30), SS =  </p>
+<p>算法对CF的个数进行限制，如上述图中B=7，表示每个内部节点的最大CF数是7个，每个叶子节点的最大CF数是5个，还有一个参数是每个CF节点的最大样本半径阈值T，属于这个CF中的样本节点一定在以T为半径的一个超球体内。</p>
+<p>聚类特征树CF Tree的生成<br>    首先定义三个参数，B, L, T<br>    初始时CF Tree是空的<br>    读入第一个样本点（a,b），将其放入新的三元组A中，（1，（a,b），a^2+b^2），将新的CF放在根节点上</p>
+<pre><code>读入第二个样本点，发现在CF的超球体内，所以将新的节点加入到CF A中。
+第三个样本点到来时，发现其并不在A的半径内，所以将其单独划分一个CF B。
+第四个样本点来临，发现其在B的半径内，所以将其加入到CF B中。
+一直重复上述过程。那么何时CF Tree的节点需要分裂呢？如下图，假设L = 3，在LN1中，新来的节点离LN1近，判断其是否属于CF sc1、sc2、sc3内，不在半径T内，所以需要新建一个CF。但是超球体内的CF个数超出了限制。这就要将LN1分裂。假设B=3，分裂之后发现根节点的CF个数也超出了限制，再对根节点进行分裂。
+</code></pre><p>构建CF Tree</p>
+<ol>
+<li>从根节点向下寻找和新样本距离最近的叶子节点和叶子节点里最近的CF节点</li>
+<li>如果新样本加入后，这个CF节点对应的超球体半径仍然满足小于阈值T，则更新路径上所有的CF三元组，插入结束。否则转入3.</li>
+<li>如果当前叶子节点的CF节点个数小于阈值L，则创建一个新的CF节点，放入新样本，将新的CF节点放入这个叶子节点，更新路径上所有的CF三元组，插入结束。否则转入4。<br>4.将当前叶子节点划分为两个新叶子节点，选择旧叶子节点中所有CF元组里超球体距离最远的两个CF元组，分布作为两个新叶子节点的第一个CF节点。将其他元组和新样本元组按照距离远近原则放入对应的叶子节点。依次向上检查父节点是否也要分裂，如果需要按和叶子节点分裂方式相同。<br>每个CF中包含若干个节点，除叶子结点外每一层包含最多B个CF，叶子节点层最多包含L个CF。返回的是CF节点，每一个CF中的节点作为一个聚类的簇。<br>BIRCH<br>1） 将所有的样本依次读入，在内存中建立一颗CF Tree, 建立的方法参考上一节。（最主要的一步，其他步骤是对这一步骤的优化）<br>2）（可选）将第一步建立的CF Tree进行筛选，去除异常CF节点，这些节点一般里面的样本点很少。对于一些超球体距离非常近的元组进行合并<br>3）（可选）利用其它的一些聚类算法比如K-Means对所有的CF元组进行聚类，得到一颗比较好的CF Tree.这一步的主要目的是消除由于样本读入顺序导致的不合理的树结构，以及一些由于节点CF个数限制导致的树结构分裂。<br>4）（可选）利用第三步生成的CF Tree的所有CF节点的质心，作为初始质心点，对所有的样本点按距离远近进行聚类。这样进一步减少了由于CF Tree的一些限制导致的聚类不合理的情况。（这个就是聚类作为k-means初始点选择的方法）<br> ROCK</li>
+</ol>
+<p>聚类评价方法<br>    熵<br>假设现在的聚类个数是1，2，3，4，5，6，有六个类别（娱乐，金融，外事，都市，国内和体育）。</p>
+<p>对于一个聚类i，首先计算 。 指的是聚类 i 中的成员（member）属于类（class）j 的概率 。其中 是在聚类 i 中所有成员的个数， 是聚类 i 中的成员属于类 j 的个数。每个聚类的entropy可以表示为 ，其中L是类（class）的个数。整个聚类划分的entropy为 ，其中K是聚类（cluster）的数目，m是整个聚类划分所涉及到的成员个数<br>    纯度<br>聚类 i 的purity定义为 。比如cluster3的纯度为671/(1+1+1+7+4+671)，整个聚类划分的purity为 ，其中K是聚类（cluster）的数目，m是整个聚类划分所涉及到的成员个数。</p>
+<pre><code>Precious、Recall、F-measure
+</code></pre><p>Actual          Predict    P    N<br>P    TP    FN<br>N    FP    TN<br>Precious = TP / (TP + FP)<br>Recall = TP / (TP + FN)<br>2/F1 = 1/Precious + 1/Recall</p>
         
           <a class="article-more-a" href="/2017/12/19/我的第一篇文章/#more">more >></a>
         
